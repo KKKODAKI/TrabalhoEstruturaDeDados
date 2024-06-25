@@ -57,6 +57,10 @@ char **ler_linhas(char *arquivo, int *num_linhas) {
     return linhas;
 }
 
+int converter_id(char *id) {
+    return atoi(id + 2);
+}
+
 int ler_atores(struct ator **atores, char **linhas, int num_linhas) {
     int num_atores = 0;
     *atores = (struct ator *)malloc(num_linhas * sizeof(struct ator));
@@ -67,37 +71,37 @@ int ler_atores(struct ator **atores, char **linhas, int num_linhas) {
     for (int i = 0; i < num_linhas; i++) {
         struct ator novoAtor;
         novoAtor.filmes = NULL;
-        char *token = strtok(linhas[i], "\t");
-        int num_tabs = 0;
-        while (token != NULL) {
-            switch (num_tabs) {
-                case 0:
-                    novoAtor.id = converter_id(token);
-                    break;
-                case 1:
-                    strncpy(novoAtor.nome, token, sizeof(novoAtor.nome) - 1);
-                    novoAtor.nome[sizeof(novoAtor.nome) - 1] = '\0';
-                    break;
-                case 5:
-                    char *filme_token = strtok(token, ",");
-                    while (filme_token != NULL) {
-                        struct node *new_node = (struct node *)malloc(sizeof(struct node));
-                        if (new_node == NULL) {
-                            printf("Erro de alocação de memória");
-                            exit(EXIT_FAILURE);
-                        }
-                        new_node->id = converter_id(filme_token);
-                        new_node->next = novoAtor.filmes;
-                        novoAtor.filmes = new_node;
-                        filme_token = strtok(NULL, ",");
+char *token = strtok(linhas[i], "\t");
+int num_tabs = 0;
+while (token != NULL) {
+    switch (num_tabs) {
+        case 0:
+            novoAtor.id = converter_id(token); 
+            break;
+        case 1:
+            strncpy(novoAtor.nome, token, sizeof(novoAtor.nome) - 1);
+            novoAtor.nome[sizeof(novoAtor.nome) - 1] = '\0';
+            break;
+        case 5: ;    
+            {
+                char *filme_token = strtok(token, ",");
+                while (filme_token != NULL) {
+                    struct node *new_node = (struct node *)malloc(sizeof(struct node));
+                    if (new_node == NULL) {
+                        printf("Erro de alocação de memória");
+                        exit(EXIT_FAILURE);
                     }
-                    break;
-                default:
-                    break;
+                    new_node->id = converter_id(filme_token); 
+                    new_node->next = novoAtor.filmes;
+                    novoAtor.filmes = new_node;
+                    filme_token = strtok(NULL, ",");
+                }
             }
-            num_tabs++;
-            token = strtok(NULL, "\t");
+            break;
         }
+        token = strtok(NULL, "\t");
+        num_tabs++;
+    }
         (*atores)[num_atores++] = novoAtor;
     }
     return num_atores;
@@ -135,9 +139,6 @@ int ler_filmes(struct filme **filmes, char **linhas, int num_linhas) {
     return num_filmes;
 }
 
-int converter_id(char *id) {
-    return atoi(id + 2);
-}
 
 void adicionar_aresta(struct filme *filmes, int num_filmes, int id1, int id2) {
     for (int i = 0; i < num_filmes; i++) {
