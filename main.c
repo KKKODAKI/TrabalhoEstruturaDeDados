@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_LINHAS 15000 
+#define MAX_LINHAS 100000 
+#define CONTEUDO 200
 
 struct node {
     int id;
@@ -34,7 +35,7 @@ char **ler_linhas(char *arquivo, int *num_linhas) {
         printf("Erro de alocação de memória");
         exit(EXIT_FAILURE);
     }
-    char linha[200];
+    char linha[CONTEUDO];
     *num_linhas = 0;
     while (fgets(linha, sizeof(linha), file) != NULL && *num_linhas < MAX_LINHAS) {
         if (*num_linhas >= tamanho_atual) {
@@ -63,7 +64,7 @@ int converter_id(char *id) {
 
 int ler_atores(struct ator **atores, char **linhas, int num_linhas) {
     int num_atores = 0;
-    *atores = (struct ator *)malloc(num_linhas * sizeof(struct ator));
+    *atores = malloc(num_linhas * sizeof(struct ator));
     if (*atores == NULL) {
         printf("Erro de alocação de memória");
         exit(EXIT_FAILURE);
