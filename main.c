@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_LINHAS 100000 
 #define CONTEUDO 200
 
 struct node {
@@ -28,18 +27,17 @@ char **ler_linhas(char *arquivo, int *num_linhas) {
         printf("Erro ao abrir arquivo '%s'\n", arquivo);
         exit(EXIT_FAILURE);
     }
-    int max_linhas = 1; 
-    int tamanho_atual = max_linhas;
-    char **linhas = (char **)malloc(max_linhas * sizeof(char *));
+    int tamanho_atual = 1;
+    char **linhas = (char **)malloc(tamanho_atual * sizeof(char *));
     if (linhas == NULL) {
         printf("Erro de alocação de memória");
         exit(EXIT_FAILURE);
     }
     char linha[CONTEUDO];
     *num_linhas = 0;
-    while (fgets(linha, sizeof(linha), file) != NULL && *num_linhas < MAX_LINHAS) {
+    while (fgets(linha, sizeof(linha), file) != NULL) {
         if (*num_linhas >= tamanho_atual) {
-            tamanho_atual += max_linhas;
+            tamanho_atual *= 2;
             linhas = (char **)realloc(linhas, tamanho_atual * sizeof(char *));
             if (linhas == NULL) {
                 printf("Erro de realocação de memória");
@@ -72,37 +70,37 @@ int ler_atores(struct ator **atores, char **linhas, int num_linhas) {
     for (int i = 0; i < num_linhas; i++) {
         struct ator novoAtor;
         novoAtor.filmes = NULL;
-char *token = strtok(linhas[i], "\t");
-int num_tabs = 0;
-while (token != NULL) {
-    switch (num_tabs) {
-        case 0:
-            novoAtor.id = converter_id(token); 
-            break;
-        case 1:
-            strncpy(novoAtor.nome, token, sizeof(novoAtor.nome) - 1);
-            novoAtor.nome[sizeof(novoAtor.nome) - 1] = '\0';
-            break;
-        case 5: ;    
-            {
-                char *filme_token = strtok(token, ",");
-                while (filme_token != NULL) {
-                    struct node *new_node = (struct node *)malloc(sizeof(struct node));
-                    if (new_node == NULL) {
-                        printf("Erro de alocação de memória");
-                        exit(EXIT_FAILURE);
+        char *token = strtok(linhas[i], "\t");
+        int num_tabs = 0;
+        while (token != NULL) {
+            switch (num_tabs) {
+                case 0:
+                    novoAtor.id = converter_id(token); 
+                    break;
+                case 1:
+                    strncpy(novoAtor.nome, token, sizeof(novoAtor.nome) - 1);
+                    novoAtor.nome[sizeof(novoAtor.nome) - 1] = '\0';
+                    break;
+                case 5: ;    
+                    {
+                        char *filme_token = strtok(token, ",");
+                        while (filme_token != NULL) {
+                            struct node *new_node = (struct node *)malloc(sizeof(struct node));
+                            if (new_node == NULL) {
+                                printf("Erro de alocação de memória");
+                                exit(EXIT_FAILURE);
+                            }
+                            new_node->id = converter_id(filme_token); 
+                            new_node->next = novoAtor.filmes;
+                            novoAtor.filmes = new_node;
+                            filme_token = strtok(NULL, ",");
+                        }
                     }
-                    new_node->id = converter_id(filme_token); 
-                    new_node->next = novoAtor.filmes;
-                    novoAtor.filmes = new_node;
-                    filme_token = strtok(NULL, ",");
-                }
+                    break;
             }
-            break;
+            token = strtok(NULL, "\t");
+            num_tabs++;
         }
-        token = strtok(NULL, "\t");
-        num_tabs++;
-    }
         (*atores)[num_atores++] = novoAtor;
     }
     return num_atores;
@@ -139,7 +137,6 @@ int ler_filmes(struct filme **filmes, char **linhas, int num_linhas) {
     }
     return num_filmes;
 }
-
 
 void adicionar_aresta(struct filme *filmes, int num_filmes, int id1, int id2) {
     for (int i = 0; i < num_filmes; i++) {
@@ -249,14 +246,19 @@ int main() {
     char arquivo_atores[] = "name.basics.tsv";
     char arquivo_filmes[] = "title.basics.tsv";
     int num_linhas_atores, num_linhas_filmes;
+
     struct ator *atores;
     struct filme *filmes;
+
     char **linhas_atores = ler_linhas(arquivo_atores, &num_linhas_atores);
     char **linhas_filmes = ler_linhas(arquivo_filmes, &num_linhas_filmes);
+
     int num_atores = ler_atores(&atores, linhas_atores, num_linhas_atores);
     int num_filmes = ler_filmes(&filmes, linhas_filmes, num_linhas_filmes);
+
     formar_clique(atores, num_atores, filmes, num_filmes);
     gerar_arquivo_dot(filmes, num_filmes);
+
     for (int i = 0; i < num_linhas_atores; i++) {
         free(linhas_atores[i]);
     }
